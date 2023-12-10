@@ -77,22 +77,123 @@ for i in features:
     sns.scatterplot(x=i, y='GlassType', data=glass_df)
     st.pyplot()
 
-st.sidebar.subheader("Histogram")
-hist_features = st.sidebar.multiselect("Select features to create histograms:",
-                                            ('RI', 'Na', 'Mg', 'Al', 'Si', 'K', 'Ca', 'Ba', 'Fe'))
-for i in hist_features:
-    st.subheader(f"Histogram for {i}")
+
+#st.sidebar.subheader("Histogram") 
+#hist_features = st.sidebar.multiselect("Select features to create histograms:",
+   #                                         ('RI', 'Na', 'Mg', 'Al', 'Si', 'K', 'Ca', 'Ba', 'Fe'))
+#for i in hist_features:
+    #st.subheader(f"Histogram for {i}")
+    #plt.figure(figsize = (12,6))
+    #plt.hist(glass_df[i], bins='sturges', edgecolor='black')
+    #st.pyplot()
+
+#st.sidebar.subheader("Box Plot")
+#box_features = st.sidebar.multiselect("Select features to create box plot:",
+   #                                         ('RI', 'Na', 'Mg', 'Al', 'Si', 'K', 'Ca', 'Ba', 'Fe'))
+
+#for i in box_features:
+    #st.subheader(f"Box Plot for {i}")
+    #plt.figure(figsize = (12, 6))
+    #sns.boxplot(glass_df[i])
+    #st.pyplot()
+
+st.sidebar.subheader("Visualization Selector")
+plot_types = st.sidebar.multiselect("Select the charts or plots:",
+                                     ('Histogram', 'Box Plot', 'Count Plot', 'Pie Chart', 'Correlation Heatmap', 'Pair Plot'))
+
+
+if 'Histogram' in plot_types:
+    st.subheader("Histogram")
+    hist_features = st.sidebar.selectbox("Select features to create histograms:",
+                                           ('RI', 'Na', 'Mg', 'Al', 'Si', 'K', 'Ca', 'Ba', 'Fe'))
     plt.figure(figsize = (12,6))
-    plt.hist(glass_df[i], bins='sturges', edgecolor='black')
+    plt.title(f"Histogram for {hist_features}")
+    plt.hist(glass_df[hist_features], bins='sturges', edgecolor='black')
     st.pyplot()
-
-st.sidebar.subheader("Box Plot")
-box_features = st.sidebar.multiselect("Select features to create box plot:",
+if 'Box Plot' in plot_types:
+    st.subheader("Boxplot")
+    box_features = st.sidebar.selectbox("Select features to create box plot:",
                                             ('RI', 'Na', 'Mg', 'Al', 'Si', 'K', 'Ca', 'Ba', 'Fe'))
-
-for i in box_features:
-    st.subheader(f"Box Plot for {i}")
-    plt.figure(figsize = (12, 6))
-    sns.boxplot(glass_df[i])
+    plt.figure(figsize = (12,6))
+    plt.title(f"Boxplot for {box_features}")
+    sns.boxplot(glass_df[box_features])
     st.pyplot()
+if 'Count Plot' in plot_types:
+    st.subheader('Count Plot')
+    sns.countplot(glass_df['GlassType'])
+    st.pyplot()
+if 'Pie Chart' in plot_types:
+    st.subheader('Pie Chart')
+    pie_data = glass_df['GlassType'].value_counts()
+    plt.figure(figsize=(12, 6))
+    plt.pie(pie_data, labels=pie_data.index, autopct="%1.2f%%", startangle=30, explode=np.linspace(.06, .16, 6))
+    st.pyplot()
+if 'Correlation Heatmap' in plot_types:
+    st.subheader('Correlation Heatmap')
+    plt.figure(figsize=(12, 6))
+    ax = sns.heatmap(glass_df.corr(), annot=True)
+    bottom, top = ax.get_ylim()
+    ax.set_ylim(bottom + 0.5, top - 0.5)
+    st.pyplot()
+if 'Pair Plot' in plot_types:
+    st.subheader("Pair Plot")
+    plt.title("Pair Plot")
+    plt.figure(figsize=(12, 6))
+    sns.pairplot(glass_df)
+    st.pyplot()
+
+st.sidebar.subheader('Select your values:')
+ri = st.sidebar.slider("Input Ri", float(glass_df['RI'].min()), float(glass_df['RI'].max()))
+na = st.sidebar.slider("Input Na", float(glass_df['Na'].min()), float(glass_df['Na'].max()))
+mg = st.sidebar.slider("Input Mg", float(glass_df['Mg'].min()), float(glass_df['Mg'].max()))
+al = st.sidebar.slider("Input Al", float(glass_df['Al'].min()), float(glass_df['Al'].max()))
+si = st.sidebar.slider("Input Si", float(glass_df['Si'].min()), float(glass_df['Si'].max()))
+k = st.sidebar.slider("Input K", float(glass_df['K'].min()), float(glass_df['K'].max()))
+ca = st.sidebar.slider("Input Ca", float(glass_df['Ca'].min()), float(glass_df['Ca'].max()))
+ba = st.sidebar.slider("Input Ba", float(glass_df['Ba'].min()), float(glass_df['Ba'].max()))
+fe = st.sidebar.slider("Input Fe", float(glass_df['Fe'].min()), float(glass_df['Fe'].max()))
+
+st.sidebar.subheader('Choose Classifier')
+classifier = st.sidebar.selectbox('Classifier', ('Support Vector Machine', 'Random Forest Classifier', 'Logistic Regression'))
+
+# if classifier == 'Support Vector Machine', ask user to input the values of 'C','kernel' and 'gamma'.
+if classifier == 'Support Vector Machine':
+    st.sidebar.subheader("Model Hyperparameters")
+    c_value = st.sidebar.number_input("C (Error Rate)", 1, 100, step = 1)
+    kernel_input = st.sidebar.radio("Kernel", ("linear", "rbf", "poly"))
+    gamma_input = st. sidebar.number_input("Gamma", 1, 100, step = 1)
+
+    # If the user clicks 'Classify' button, perform prediction and display accuracy score and confusion matrix.
+    # This 'if' statement must be inside the above 'if' statement.
+    if st.sidebar.button('Classify'):
+        st.subheader("Support Vector Machine")
+        svc_model = SVC(C = c_value, kernel = kernel_input, gamma = gamma_input)
+        svc_model.fit(X_train,y_train)
+        y_pred = svc_model.predict(X_test)
+        accuracy = svc_model.score(X_test, y_test)
+        glass_type = prediction(svc_model, ri, na, mg, al, si, k, ca, ba, fe)
+        st.write("The Type of glass predicted is:", glass_type)
+        st.write("Accuracy", accuracy.round(2))
+        plot_confusion_matrix(svc_model, X_test, y_test)
+        st.pyplot()
+
+# S5.1: Implement Random Forest Classifier with hyperparameter tuning.
+# if classifier == 'Random Forest Classifier', ask user to input the values of 'n_estimators' and 'max_depth'.
+if classifier == 'Random Forest Classifier':
+    st.sidebar.subheader("Model Hyperparameters")
+    n_estimators_input = st.sidebar.number_input("Number of trees in the forest", 100, 5000, step = 10)
+    max_depth_input = st.sidebar.number_input("Maximum depth of the tree", 1, 100, step = 1)
+
+    # If the user clicks 'Classify' button, perform prediction and display accuracy score and confusion matrix.
+    # This 'if' statement must be inside the above 'if' statement.
+    if st.sidebar.button('Classify'):
+        st.subheader("Random Forest Classifier")
+        rf_clf = RandomForestClassifier(n_estimators = n_estimators_input, max_depth = max_depth_input, n_jobs = -1)
+        rf_clf.fit(X_train,y_train)
+        accuracy = rf_clf.score(X_test, y_test)
+        glass_type = prediction(rf_clf, ri, na, mg, al, si, k, ca, ba, fe)
+        st.write("The Type of glass predicted is:", glass_type)
+        st.write("Accuracy", accuracy.round(2))
+        plot_confusion_matrix(rf_clf, X_test, y_test)
+        st.pyplot()
 
